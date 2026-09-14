@@ -24,7 +24,11 @@ import AdhocMetric from './AdhocMetric';
 import { savedMetricType as SavedMetricTypeDef } from './types';
 
 interface MetricDefinitionValueProps {
-  option: AdhocMetric | SavedMetricTypeDef | string;
+  option:
+    | AdhocMetric
+    | SavedMetricTypeDef
+    | Pick<SavedMetricTypeDef, 'metric_name'>
+    | string;
   index: number;
   onMetricEdit?: (newMetric: Metric, oldMetric: Metric) => void;
   onRemoveMetric?: (index: number) => void;
