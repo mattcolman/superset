@@ -43,7 +43,7 @@ import {
   postStopQuery,
   Query,
 } from 'src/SqlLab/actions/sqlLab';
-import { RootState, store } from 'src/views/store';
+import { AppDispatch, RootState, store } from 'src/views/store';
 import { AnyListenerPredicate } from '@reduxjs/toolkit';
 import type { QueryEditor, SqlLabRootState } from 'src/SqlLab/types';
 import { newQueryTabName } from 'src/SqlLab/utils/newQueryTabName';
@@ -58,6 +58,20 @@ import {
 } from './models';
 
 const { CTASMethod } = sqlLabApi;
+
+// store.dispatch is typed as Dispatch<AnyAction> because the middleware tuple
+// type is erased in setupStore; AppDispatch restores thunk support.
+const getDispatch = (): AppDispatch => store.dispatch as AppDispatch;
+
+/**
+ * Shape of the SQL Lab actions the listener predicates inspect. Only the
+ * fields used for routing events to the originating tab are declared.
+ */
+interface SqlLabListenerAction {
+  type: string;
+  query?: Pick<Query, 'sqlEditorId' | 'sqlEditorImmutableId'>;
+  queryEditor?: Pick<QueryEditor, 'id'>;
+}
 
 const getSqlLabState = () => {
   const { sqlLab }: { sqlLab: SqlLabRootState['sqlLab'] } = store.getState();
@@ -335,7 +349,7 @@ const predicate = (actionType: string): AnyListenerPredicate<RootState> => {
   // This ID never changes for a tab, ensuring stable event routing
   const registrationImmutableId = getActiveEditorImmutableId();
 
-  return action => {
+  return (action: SqlLabListenerAction) => {
     if (action.type !== actionType) return false;
 
     // If we don't have a registration ID, don't filter events
@@ -361,12 +375,12 @@ const predicate = (actionType: string): AnyListenerPredicate<RootState> => {
 // Simple predicate for global events not tied to a specific tab
 const globalPredicate =
   (actionType: string): AnyListenerPredicate<RootState> =>
-  action =>
+  (action: SqlLabListenerAction) =>
     action.type === actionType;
 
 const onDidQueryRun: typeof sqlLabApi.onDidQueryRun = (
   listener: (queryContext: sqlLabApi.QueryContext) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     predicate(START_QUERY),
@@ -377,7 +391,7 @@ const onDidQueryRun: typeof sqlLabApi.onDidQueryRun = (
 
 const onDidQuerySuccess: typeof sqlLabApi.onDidQuerySuccess = (
   listener: (queryResultContext: sqlLabApi.QueryResultContext) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     predicate(QUERY_SUCCESS),
@@ -389,7 +403,7 @@ const onDidQuerySuccess: typeof sqlLabApi.onDidQuerySuccess = (
 
 const onDidQueryStop: typeof sqlLabApi.onDidQueryStop = (
   listener: (queryContext: sqlLabApi.QueryContext) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     predicate(STOP_QUERY),
@@ -402,7 +416,7 @@ const onDidQueryFail: typeof sqlLabApi.onDidQueryFail = (
   listener: (
     queryErrorResultContext: sqlLabApi.QueryErrorResultContext,
   ) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     predicate(QUERY_FAILED),
@@ -414,7 +428,7 @@ const onDidQueryFail: typeof sqlLabApi.onDidQueryFail = (
 
 const onDidChangeEditorDatabase: typeof sqlLabApi.onDidChangeEditorDatabase = (
   listener: (e: number) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     predicate(QUERY_EDITOR_SETDB),
@@ -426,7 +440,7 @@ const onDidChangeEditorDatabase: typeof sqlLabApi.onDidChangeEditorDatabase = (
 
 const onDidCloseTab: typeof sqlLabApi.onDidCloseTab = (
   listener: (tab: sqlLabApi.Tab) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     globalPredicate(REMOVE_QUERY_EDITOR),
@@ -447,7 +461,7 @@ const onDidCloseTab: typeof sqlLabApi.onDidCloseTab = (
 
 const onDidChangeActiveTab: typeof sqlLabApi.onDidChangeActiveTab = (
   listener: (tab: sqlLabApi.Tab) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     globalPredicate(SET_ACTIVE_QUERY_EDITOR),
@@ -459,7 +473,7 @@ const onDidChangeActiveTab: typeof sqlLabApi.onDidChangeActiveTab = (
 
 const onDidChangeEditorSchema: typeof sqlLabApi.onDidChangeEditorSchema = (
   listener: (schema: string) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     predicate(QUERY_EDITOR_SET_SCHEMA),
@@ -470,7 +484,7 @@ const onDidChangeEditorSchema: typeof sqlLabApi.onDidChangeEditorSchema = (
 
 const onDidChangeActivePanel: typeof sqlLabApi.onDidChangeActivePanel = (
   listener: (panel: sqlLabApi.Panel) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     globalPredicate(SET_ACTIVE_SOUTHPANE_TAB),
@@ -481,7 +495,7 @@ const onDidChangeActivePanel: typeof sqlLabApi.onDidChangeActivePanel = (
 
 const onDidChangeTabTitle: typeof sqlLabApi.onDidChangeTabTitle = (
   listener: (title: string) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     predicate(QUERY_EDITOR_SET_TITLE),
@@ -495,7 +509,7 @@ const onDidChangeTabTitle: typeof sqlLabApi.onDidChangeTabTitle = (
  */
 const onDidCreateTab: typeof sqlLabApi.onDidCreateTab = (
   listener: (tab: sqlLabApi.Tab) => void,
-  thisArgs?: any,
+  thisArgs?: unknown,
 ): Disposable =>
   createActionListener(
     globalPredicate(ADD_QUERY_EDITOR),
@@ -559,7 +573,7 @@ const createTab: typeof sqlLabApi.createTab = async (
     name,
   };
 
-  store.dispatch(addQueryEditor(newQueryEditor) as any);
+  getDispatch()(addQueryEditor(newQueryEditor));
 
   // Get the newly created tab
   const updatedState = store.getState() as SqlLabRootState;
@@ -655,8 +669,7 @@ const executeQuery: typeof sqlLabApi.executeQuery = async options => {
     updateTabState,
   };
 
-  // Cast to any because store.dispatch type doesn't include thunk middleware types
-  store.dispatch(runQueryAction(query) as any);
+  getDispatch()(runQueryAction(query));
 
   return queryId;
 };
@@ -667,9 +680,9 @@ const cancelQuery: typeof sqlLabApi.cancelQuery = async (queryId: string) => {
 
   if (query) {
     // Dispatch stopQueryAction to emit STOP_QUERY event for onDidQueryStop listeners
-    store.dispatch(stopQueryAction(query));
+    getDispatch()(stopQueryAction(query));
     // Dispatch postStopQuery to send HTTP request to cancel on server
-    store.dispatch(postStopQuery(query as any) as any);
+    getDispatch()(postStopQuery(query));
   }
 };
 
