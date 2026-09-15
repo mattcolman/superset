@@ -359,6 +359,12 @@ def _parse_temporal_join_values(series: pd.Series, column_name: str) -> pd.Serie
     try:
         return pd.to_datetime(series, errors="coerce", format="mixed")
     except (TypeError, ValueError) as ex:
+        if _has_multiple_utc_offsets(series):
+            # Vectorized parsing rejects mixed UTC offsets; parse element-wise
+            # so each value keeps its own offset for wall-clock alignment.
+            return series.map(
+                lambda value: pd.to_datetime(value, errors="coerce", format="mixed")
+            )
         raise _temporal_axis_parse_error(column_name) from ex
 
 

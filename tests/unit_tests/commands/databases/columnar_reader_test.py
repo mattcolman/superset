@@ -126,9 +126,13 @@ def test_columnar_reader_file_to_dataframe(
             expected_val = expected_values[i][j]
             actual_val = actual_values[i][j]
 
-            # Check if both values are NaN
-            if isinstance(expected_val, float) and isinstance(actual_val, float):
-                assert np.isnan(expected_val) == np.isnan(actual_val)
+            # missing values may surface as None or NaN depending on dtype
+            if expected_val is None or (
+                isinstance(expected_val, float) and np.isnan(expected_val)
+            ):
+                assert actual_val is None or (
+                    isinstance(actual_val, float) and np.isnan(actual_val)
+                )
             else:
                 assert expected_val == actual_val
     file.close()
@@ -140,23 +144,13 @@ def test_excel_reader_wrong_columns_to_read():
     )
     with pytest.raises(DatabaseUploadFailed) as ex:
         reader.file_to_dataframe(create_columnar_file(COLUMNAR_DATA))
-    assert (
-        str(ex.value)
-        == (
-            "Parsing error: No match for FieldRef.Name(xpto) in Name: string\n"
-            "Age: int64\n"
-            "City: string\n"
-            "Birth: string\n"
-            "__fragment_index: int32\n"
-            "__batch_index: int32\n"
-            "__last_in_fragment: bool\n"
-            "__filename: string"
-        )
-        != (
-            "Parsing error: Usecols do not match columns, columns expected but not found: "  # noqa: E501
-            "['xpto'] (sheet: 0)"
-        )
+    # pandas string columns are written to parquet as ``string`` or
+    # ``large_string`` depending on the pandas version
+    assert str(ex.value).startswith(
+        "Parsing error: No match for FieldRef.Name(xpto) in Name: "
     )
+    assert "Age: int64\n" in str(ex.value)
+    assert str(ex.value).endswith("__last_in_fragment: bool\n__filename: string")
 
 
 def test_columnar_reader_invalid_file():

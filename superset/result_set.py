@@ -270,9 +270,11 @@ class SupersetResultSet:
                                 series = pd.to_datetime(
                                     series, utc=True, errors="coerce"
                                 )
+                                # match the resolution pandas picked, which may
+                                # be coarser than "ns" for far-future dates
                                 pa_data[i] = pa.Array.from_pandas(
                                     series,
-                                    type=pa.timestamp("ns", tz=tz),
+                                    type=pa.timestamp(series.dt.unit, tz=tz),
                                 )
                         except Exception as ex:  # pylint: disable=broad-except
                             logger.exception(ex)

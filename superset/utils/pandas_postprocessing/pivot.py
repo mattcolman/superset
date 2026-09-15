@@ -355,8 +355,8 @@ def pivot(  # pylint: disable=too-many-arguments  # noqa: C901
         df = _apply_show_values_as(df, percent_mode)
 
     if combine_value_with_metric:
-        # dropna=False preserves restored all-NaN metric rows that would otherwise
-        # be silently dropped by stack's default dropna=True behavior.
-        df = df.stack(level=0, dropna=False).unstack()
+        # The future_stack implementation never drops all-NaN rows, so restored
+        # all-NaN metric rows survive the reshape.
+        df = df.stack(level=0, future_stack=True).unstack()
 
     return df

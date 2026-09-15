@@ -205,6 +205,32 @@ def _get_aggregate_funcs(
     return agg_funcs
 
 
+def _preserve_integer_dtype(
+    base: pd.Series | DataFrame, new: pd.Series | DataFrame
+) -> pd.Series | DataFrame:
+    """
+    Keep integer columns integer when the replacement values are floats that are
+    all integral (e.g. a rolling sum). Values containing NaN or fractions are
+    returned as-is so the column upcasts to float.
+    """
+    if isinstance(base, DataFrame) and isinstance(new, DataFrame):
+        new = new.copy()
+        for column in new.columns:
+            if column in base.columns:
+                new[column] = _preserve_integer_dtype(base[column], new[column])
+        return new
+    if (
+        isinstance(base, pd.Series)
+        and isinstance(new, pd.Series)
+        and pd.api.types.is_integer_dtype(base)
+        and pd.api.types.is_float_dtype(new)
+        and new.notna().all()
+        and (new % 1 == 0).all()
+    ):
+        return new.astype(base.dtype)
+    return new
+
+
 def _append_columns(
     base_df: DataFrame, append_df: DataFrame, columns: dict[str, str]
 ) -> DataFrame:
@@ -228,7 +254,11 @@ def _append_columns(
     if all(key == value for key, value in columns.items()):
         # make sure to return a new DataFrame instead of changing the `base_df`.
         _base_df = base_df.copy()
-        _base_df.loc[:, columns.keys()] = append_df
+        for column in columns:
+            new_values = append_df[column]
+            if column in _base_df.columns:
+                new_values = _preserve_integer_dtype(_base_df[column], new_values)
+            _base_df[column] = new_values
         return _base_df
     append_df = append_df.rename(columns=columns)
     return pd.concat([base_df, append_df], axis="columns")
