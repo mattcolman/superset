@@ -16,20 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-export default {
-  displayName: 'generator-superset',
-  testRegex: 'test\\/.*\\.test\\.[jt]sx?$',
-  testEnvironment: 'node',
-  extensionsToTreatAsEsm: ['.ts'],
-  transform: {
-    '\\.ts$': [
-      'babel-jest',
-      {
-        babelrc: false,
-        configFile: false,
-        presets: ['@babel/preset-typescript'],
-      },
-    ],
-  },
-};
+declare module 'yosay' {
+  export interface YosayOptions {
+    maxLength?: number;
+  }
+  export default function yosay(
+    message?: string,
+    options?: YosayOptions,
+  ): string;
+}

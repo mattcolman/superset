@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,26 +17,4 @@
  * under the License.
  */
 
-import chalk from 'chalk';
-import { dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
-import yosay from 'yosay';
-import Generator from 'yeoman-generator';
-
-export default class extends Generator {
-  async prompting() {
-    // Have Yeoman greet the user.
-    this.log(
-      yosay(`Welcome to the ${chalk.red('generator-superset')} generator!`),
-    );
-
-    this.option('skipInstall');
-  }
-
-  async configuring() {
-    const generatorDirname = dirname(fileURLToPath(import.meta.url));
-    await this.composeWith(
-      resolve(generatorDirname, `../plugin-chart/index.js`),
-    );
-  }
-}
+export default 'test-file-stub';
