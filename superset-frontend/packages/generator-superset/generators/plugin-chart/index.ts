@@ -20,11 +20,24 @@
 import Generator from 'yeoman-generator';
 import { kebabCase, camelCase, startCase, upperFirst } from 'lodash-es';
 
-export default class extends Generator {
+type ChartType = 'regular' | 'timeseries';
+
+interface PluginChartAnswers {
+  packageName: string;
+  pluginName: string;
+  description: string;
+  chartType: ChartType;
+}
+
+type TemplateFile = [src: string, dest: string];
+
+export default class PluginChartGenerator extends Generator {
+  answers!: PluginChartAnswers;
+
   async prompting() {
     this.option('skipInstall');
 
-    this.answers = await this.prompt([
+    this.answers = await this.prompt<PluginChartAnswers>([
       {
         type: 'input',
         name: 'packageName',
@@ -75,7 +88,7 @@ export default class extends Generator {
       packageLabel,
     };
 
-    [
+    const templates: TemplateFile[] = [
       ['gitignore.erb', '.gitignore'],
       ['babel.config.erb', 'babel.config.js'],
       ['jest.config.erb', 'jest.config.js'],
@@ -92,15 +105,17 @@ export default class extends Generator {
       ['src/MyChart.erb', `src/${packageLabel}.tsx`],
       ['test/index.erb', 'test/index.test.ts'],
       [
-        'test/__mocks__/mockExportString.js',
-        'test/__mocks__/mockExportString.js',
+        'test/__mocks__/mockExportString.ts',
+        'test/__mocks__/mockExportString.ts',
       ],
       ['test/plugin/buildQuery.test.erb', 'test/plugin/buildQuery.test.ts'],
       [
         'test/plugin/transformProps.test.erb',
         'test/plugin/transformProps.test.ts',
       ],
-    ].forEach(([src, dest]) => {
+    ];
+
+    templates.forEach(([src, dest]) => {
       this.fs.copyTpl(
         this.templatePath(src),
         this.destinationPath(dest),
