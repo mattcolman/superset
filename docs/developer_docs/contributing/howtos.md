@@ -342,7 +342,7 @@ pybabel compile --use-fuzzy -d superset/translations
 ```
 
 `--use-fuzzy` includes `#, fuzzy` entries in the compiled `.mo` files. Superset
-serves fuzzy translations on purpose: the frontend build (`po2json --fuzzy`)
+serves fuzzy translations on purpose: the frontend build (`npm run build-translation`)
 already includes them, `flask fab babel-compile` (used by the release images)
 compiles with `-f`, and the production `Dockerfile` compiles with `--use-fuzzy`
 as well. This keeps machine-generated (and other draft) translations visible in
