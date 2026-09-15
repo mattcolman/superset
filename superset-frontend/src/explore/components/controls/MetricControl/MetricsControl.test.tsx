@@ -24,7 +24,12 @@ import {
   selectOption,
   userEvent,
 } from 'spec/helpers/testing-library';
-import MetricsControl from 'src/explore/components/controls/MetricControl/MetricsControl';
+import MetricsControl, {
+  coerceAdhocMetrics,
+  isDictionaryForAdhocMetric,
+  isMetricValue,
+  isSavedMetricObject,
+} from 'src/explore/components/controls/MetricControl/MetricsControl';
 import AdhocMetric, {
   EXPRESSION_TYPES,
 } from 'src/explore/components/controls/MetricControl/AdhocMetric';
@@ -250,4 +255,86 @@ test('does not fail if no columns or savedMetrics are passed', () => {
     columns: null,
   });
   expect(screen.getByText(/add metric/i)).toBeInTheDocument();
+});
+
+test('isSavedMetricObject only accepts objects with a non-empty metric_name', () => {
+  expect(isSavedMetricObject({ metric_name: 'sum__value' })).toBe(true);
+  expect(isSavedMetricObject({ metric_name: '', expression: '' })).toBe(false);
+  expect(isSavedMetricObject({ metric_name: 1 })).toBe(false);
+  expect(isSavedMetricObject('sum__value')).toBe(false);
+  expect(isSavedMetricObject(null)).toBe(false);
+});
+
+test('isDictionaryForAdhocMetric matches plain adhoc dictionaries but not instances', () => {
+  const dictionary = {
+    expressionType: EXPRESSION_TYPES.SQL,
+    sqlExpression: 'COUNT(*)',
+  };
+  expect(isDictionaryForAdhocMetric(dictionary)).toBe(true);
+  expect(isDictionaryForAdhocMetric(new AdhocMetric(dictionary))).toBe(false);
+  expect(isDictionaryForAdhocMetric({ metric_name: 'sum__value' })).toBe(false);
+  expect(isDictionaryForAdhocMetric('sum__value')).toBe(false);
+  expect(isDictionaryForAdhocMetric(undefined)).toBe(false);
+});
+
+test('isMetricValue accepts metric names, saved metric objects and adhoc instances', () => {
+  expect(isMetricValue('sum__value')).toBe(true);
+  expect(isMetricValue({ metric_name: 'sum__value' })).toBe(true);
+  expect(isMetricValue(sumValueAdhocMetric)).toBe(true);
+  expect(isMetricValue({ expressionType: EXPRESSION_TYPES.SIMPLE })).toBe(
+    false,
+  );
+  expect(isMetricValue(null)).toBe(false);
+  expect(isMetricValue(42)).toBe(false);
+});
+
+test('coerceAdhocMetrics converts dictionaries and keeps saved metrics', () => {
+  const dictionary = {
+    expressionType: EXPRESSION_TYPES.SIMPLE,
+    column: valueColumn,
+    aggregate: AGGREGATES.SUM,
+    optionName: 'metric_a',
+  };
+  const savedMetric = { metric_name: 'avg__value', expression: 'AVG(value)' };
+
+  expect(coerceAdhocMetrics(undefined)).toEqual([]);
+  expect(coerceAdhocMetrics(null)).toEqual([]);
+  expect(coerceAdhocMetrics('sum__value')).toEqual(['sum__value']);
+  expect(coerceAdhocMetrics(sumValueAdhocMetric)).toEqual([
+    sumValueAdhocMetric,
+  ]);
+
+  const [single] = coerceAdhocMetrics(dictionary);
+  expect(single).toBeInstanceOf(AdhocMetric);
+  expect(single).toMatchObject({ optionName: 'metric_a' });
+
+  const coerced = coerceAdhocMetrics([
+    'sum__value',
+    savedMetric,
+    dictionary,
+    sumValueAdhocMetric,
+    null,
+  ]);
+  expect(coerced).toHaveLength(4);
+  expect(coerced[0]).toBe('sum__value');
+  expect(coerced[1]).toBe(savedMetric);
+  expect(coerced[2]).toBeInstanceOf(AdhocMetric);
+  expect(coerced[3]).toBe(sumValueAdhocMetric);
+});
+
+test('coerceAdhocMetrics regenerates colliding optionNames', () => {
+  const dictionary = {
+    expressionType: EXPRESSION_TYPES.SIMPLE,
+    column: valueColumn,
+    aggregate: AGGREGATES.SUM,
+    optionName: 'metric_shared',
+  };
+  const [first, second] = coerceAdhocMetrics([
+    dictionary,
+    { ...dictionary, aggregate: AGGREGATES.AVG },
+  ]);
+  expect(first).toBeInstanceOf(AdhocMetric);
+  expect(second).toBeInstanceOf(AdhocMetric);
+  expect((first as AdhocMetric).optionName).toBe('metric_shared');
+  expect((second as AdhocMetric).optionName).not.toBe('metric_shared');
 });

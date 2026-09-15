@@ -34,7 +34,7 @@ interface ColumnType {
   [key: string]: unknown;
 }
 
-interface AdhocMetricInput {
+export interface AdhocMetricInput {
   expressionType?: string;
   column?: ColumnType | null;
   aggregate?: string | null;
