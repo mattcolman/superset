@@ -24,7 +24,7 @@ under the License.
 
 # End-to-End Testing
 
-Apache Superset uses Playwright for end-to-end testing, migrating from the legacy Cypress tests.
+Apache Superset uses Playwright for end-to-end testing.
 
 ## Running Tests
 
@@ -51,16 +51,6 @@ npm run playwright:headed
 # Debug specific test file
 npm run playwright:debug tests/auth/login.spec.ts
 # or: npx playwright test --debug tests/auth/login.spec.ts
-```
-
-### Cypress (Deprecated)
-
-Cypress tests are being migrated to Playwright. For legacy tests:
-
-```bash
-cd superset-frontend/cypress-base
-npm run cypress-run-chrome    # Headless
-npm run cypress-debug         # Interactive UI
 ```
 
 ## Project Architecture
