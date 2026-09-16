@@ -20,7 +20,7 @@ import binascii
 import logging
 import socket
 from io import StringIO
-from typing import TYPE_CHECKING
+from typing import NoReturn, TYPE_CHECKING
 
 import paramiko
 import sshtunnel
@@ -46,6 +46,33 @@ if TYPE_CHECKING:
     from superset.databases.ssh_tunnel.models import SSHTunnel
 
 logger = logging.getLogger(__name__)
+
+
+class _UnsupportedDSSKey(PKey):
+    """
+    Placeholder for ``paramiko.DSSKey``, which paramiko 4.0 removed together with
+    all DSA support. ``sshtunnel`` still looks the class up unconditionally in
+    ``SSHTunnelForwarder.get_keys`` while scanning ``~/.ssh`` for default keys,
+    so without an attribute of that name every tunnel construction fails with
+    ``AttributeError``. Loading a key through it raises ``SSHException``, which
+    ``sshtunnel`` treats as "not a key of this type" and skips.
+    """
+
+    @classmethod
+    def from_private_key_file(
+        cls, filename: object, password: str | None = None
+    ) -> NoReturn:
+        raise SSHException("DSA (ssh-dss) keys are not supported")
+
+    @classmethod
+    def from_private_key(
+        cls, file_obj: object, password: str | None = None
+    ) -> NoReturn:
+        raise SSHException("DSA (ssh-dss) keys are not supported")
+
+
+if not hasattr(paramiko, "DSSKey"):
+    paramiko.DSSKey = _UnsupportedDSSKey  # type: ignore[attr-defined]
 
 # Order matters: paramiko's per-class loaders raise SSHException with vague
 # "unpack requires 4 bytes" messages on type mismatches, so we try the more

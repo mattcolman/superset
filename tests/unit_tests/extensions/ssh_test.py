@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import paramiko
@@ -99,6 +100,24 @@ def test_ssh_tunnel_timeout_setting() -> None:
     factory.init_app(app)
     assert sshtunnel.TUNNEL_TIMEOUT == 123.0
     assert sshtunnel.SSH_TIMEOUT == 321.0
+
+
+def test_sshtunnel_forwarder_constructs_without_paramiko_dsa(tmp_path: Path) -> None:
+    """
+    ``sshtunnel.SSHTunnelForwarder.__init__`` scans ``~/.ssh`` via ``get_keys``,
+    which references ``paramiko.DSSKey`` unconditionally. paramiko >= 4 removed
+    DSA support, so the shim in ``superset.extensions.ssh`` must keep tunnel
+    construction working and skip any ``id_dsa`` file it finds.
+    """
+    (tmp_path / "id_dsa").write_text("not a usable key")
+    server = sshtunnel.SSHTunnelForwarder(
+        ("ssh.example.com", 22),
+        ssh_username="tunneluser",
+        ssh_password="secret",  # noqa: S106
+        remote_bind_address=("127.0.0.1", 5432),
+        host_pkey_directories=[str(tmp_path)],
+    )
+    assert server.ssh_pkeys == []
 
 
 def _make_ed25519_pem() -> str:
