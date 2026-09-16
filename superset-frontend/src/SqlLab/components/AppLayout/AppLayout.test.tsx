@@ -29,7 +29,7 @@ import {
 import AppLayout from './index';
 
 jest.mock('src/components/ResizableSidebar/useStoredSidebarWidth');
-jest.mock('src/components/Splitter', () => {
+jest.mock('antd', () => {
   const Splitter = ({
     onResizeEnd,
     children,
@@ -51,7 +51,7 @@ jest.mock('src/components/Splitter', () => {
   Splitter.Panel = ({ children }: { children: React.ReactNode }) => (
     <div data-test="mock-panel">{children}</div>
   );
-  return { Splitter };
+  return { ...jest.requireActual('antd'), Splitter };
 });
 jest.mock('@superset-ui/core/components/Grid', () => ({
   ...jest.requireActual('@superset-ui/core/components/Grid'),
