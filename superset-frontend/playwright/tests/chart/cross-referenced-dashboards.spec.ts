@@ -112,7 +112,10 @@ testWithAssets(
       }),
     });
     expect(createResponse.ok()).toBe(true);
-    const chart = { id: await extractIdFromResponse(createResponse) };
+    const chart = {
+      id: await extractIdFromResponse(createResponse),
+      name: chartName,
+    };
     testAssets.trackChart(chart.id);
 
     const explorePage = new ExplorePage(page);
