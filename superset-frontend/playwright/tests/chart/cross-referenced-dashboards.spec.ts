@@ -38,8 +38,9 @@ import { testWithAssets, expect } from '../../helpers/fixtures';
 import { TIMEOUT } from '../../utils/constants';
 import { ExplorePage } from '../../pages/ExplorePage';
 import { DashboardPage } from '../../pages/DashboardPage';
-import { apiPutChart } from '../../helpers/api/chart';
-import { createTestChart } from './chart-test-helpers';
+import { apiPostChart, apiPutChart } from '../../helpers/api/chart';
+import { getDatasetByName } from '../../helpers/api/dataset';
+import { extractIdFromResponse } from '../../helpers/api/assertions';
 import { createTestDashboard } from '../dashboard/dashboard-test-helpers';
 
 // SEARCH_THRESHOLD is 10; one more dashboard is needed to show the search box.
@@ -90,9 +91,29 @@ testWithAssets(
     }
     const [firstDashboard] = dashboards;
 
-    const chart = await createTestChart(page, testAssets, testInfo, {
-      prefix: 'xref_chart',
+    // Explore keeps Save disabled until the chart's required controls are
+    // set, so the chart is created with a complete big_number_total config.
+    const dataset = await getDatasetByName(page, 'members_channels_2');
+    if (!dataset) {
+      throw new Error(
+        'members_channels_2 dataset not found — run Superset with --load-examples',
+      );
+    }
+    const chartName = `xref_chart_${Date.now()}_${testInfo.parallelIndex}`;
+    const createResponse = await apiPostChart(page, {
+      slice_name: chartName,
+      datasource_id: dataset.id,
+      datasource_type: 'table',
+      viz_type: 'big_number_total',
+      params: JSON.stringify({
+        datasource: `${dataset.id}__table`,
+        viz_type: 'big_number_total',
+        metric: 'count',
+      }),
     });
+    expect(createResponse.ok()).toBe(true);
+    const chart = { id: await extractIdFromResponse(createResponse) };
+    testAssets.trackChart(chart.id);
 
     const explorePage = new ExplorePage(page);
     await explorePage.goto(chart.id, { timeout: TIMEOUT.EXPLORE_PAGE_LOAD });
