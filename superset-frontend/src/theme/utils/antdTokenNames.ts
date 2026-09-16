@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { theme } from 'antd';
+import { getAntdTokenNames } from '@apache-superset/core/theme';
 import getBootstrapData from 'src/utils/getBootstrapData';
 
 /**
@@ -140,9 +140,7 @@ let validTokenNamesCache: Set<string> | undefined;
  */
 function getValidTokenNames(): Set<string> {
   if (validTokenNamesCache === undefined) {
-    // Extract all token names from Ant Design's default theme
-    const antdTokens = theme.getDesignToken();
-    const antdTokenNames = Object.keys(antdTokens);
+    const antdTokenNames = getAntdTokenNames();
 
     // Combine with Superset custom tokens + deployment-registered extras
     validTokenNamesCache = new Set([

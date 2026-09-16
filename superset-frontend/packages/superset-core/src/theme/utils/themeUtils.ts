@@ -137,6 +137,14 @@ export function isThemeConfigDark(config: AnyThemeConfig): boolean {
 }
 
 /**
+ * Names of every design token in Ant Design's default theme.
+ * Lets consumers validate token names without depending on antd directly.
+ */
+export function getAntdTokenNames(): string[] {
+  return Object.keys(antdTheme.getDesignToken());
+}
+
+/**
  * Hook to determine if the current theme is dark mode
  * @returns true if theme is dark, false if light
  */
