@@ -180,14 +180,16 @@ testWithAssets(
 
     // Above SEARCH_THRESHOLD the submenu gains a search box.
     popup = await openOnDashboardsSubmenu(page);
+    // The search box lives in a disabled menu item (so clicks don't close the
+    // menu), which fails Playwright's enabled check; the input itself is live.
     const search = popup.getByPlaceholder('Search');
     await expect(search).toBeVisible();
-    await search.fill('1_xref');
+    await search.fill('1_xref', { force: true });
     await expect(popup).toContainText(firstDashboard.name);
     await expect(popup).not.toContainText(dashboards[1].name);
-    await search.fill('Blahblah');
+    await search.fill('Blahblah', { force: true });
     await expect(popup).toContainText('No results found');
-    await popup.locator('[aria-label="close-circle"]').click();
+    await popup.locator('[aria-label="close-circle"]').click({ force: true });
     await expect(popup).toContainText(dashboards[1].name);
 
     // Each entry links to the dashboard; follow one without a new tab.
