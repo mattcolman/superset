@@ -200,6 +200,7 @@ export * from './Table';
 export * from './TableView';
 export * from './Tag';
 export * from './TelemetryPixel';
+export * from './TimePicker';
 export * from './UnsavedChangesModal';
 export * from './constants';
 export * from './Result';

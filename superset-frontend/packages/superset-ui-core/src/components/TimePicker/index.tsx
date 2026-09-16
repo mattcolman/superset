@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  TimePicker as AntdTimePicker,
-  TimePickerProps,
-  TimeRangePickerProps,
-} from 'antd';
+import { TimePicker as AntdTimePicker } from 'antd';
+import { css } from '@apache-superset/core/theme';
+import type { TimePickerProps, TimeRangePickerProps } from './types';
 
-const commonCss = { width: '100%' };
+const commonCss = css`
+  width: 100%;
+`;
 
 export const TimePicker = (props: TimePickerProps) => (
   <AntdTimePicker css={commonCss} {...props} />
@@ -31,3 +31,5 @@ export const TimePicker = (props: TimePickerProps) => (
 export const TimeRangePicker = (props: TimeRangePickerProps) => (
   <AntdTimePicker.RangePicker css={commonCss} {...props} />
 );
+
+export type { TimePickerProps, TimeRangePickerProps };
