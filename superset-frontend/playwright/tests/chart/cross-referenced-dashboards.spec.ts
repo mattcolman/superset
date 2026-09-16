@@ -38,7 +38,11 @@ import { testWithAssets, expect } from '../../helpers/fixtures';
 import { TIMEOUT } from '../../utils/constants';
 import { ExplorePage } from '../../pages/ExplorePage';
 import { DashboardPage } from '../../pages/DashboardPage';
-import { apiPostChart, apiPutChart } from '../../helpers/api/chart';
+import {
+  apiGetChart,
+  apiPostChart,
+  apiPutChart,
+} from '../../helpers/api/chart';
 import { getDatasetByName } from '../../helpers/api/dataset';
 import { extractIdFromResponse } from '../../helpers/api/assertions';
 import { createTestDashboard } from '../dashboard/dashboard-test-helpers';
@@ -112,10 +116,7 @@ testWithAssets(
       }),
     });
     expect(createResponse.ok()).toBe(true);
-    const chart = {
-      id: await extractIdFromResponse(createResponse),
-      name: chartName,
-    };
+    const chart = { id: await extractIdFromResponse(createResponse) };
     testAssets.trackChart(chart.id);
 
     const explorePage = new ExplorePage(page);
@@ -153,15 +154,13 @@ testWithAssets(
     expect((await updateResponse).ok()).toBe(true);
     await expect(saveModal).toHaveCount(0);
 
-    await expect(
-      page.getByText(`was added to dashboard [${firstDashboard.name}]`),
-    ).toBeVisible({ timeout: TIMEOUT.API_RESPONSE });
-    await expect(
-      page.getByText(`Chart [${chart.name}] has been overwritten`),
-    ).toBeVisible();
     await expect(metadataBar).toContainText('Added to 1 dashboard', {
       timeout: TIMEOUT.API_RESPONSE,
     });
+    const savedChart = await (await apiGetChart(page, chart.id)).json();
+    expect(
+      savedChart.result.dashboards.map((d: { id: number }) => d.id),
+    ).toEqual([firstDashboard.id]);
 
     popup = await openOnDashboardsSubmenu(page);
     await expect(popup).toContainText(firstDashboard.name);
@@ -204,8 +203,8 @@ testWithAssets(
     await expect(
       page
         .locator('[data-test="dashboard-header-container"]')
-        .locator('[data-test="textarea-editable-title-input"]')
+        .locator('[data-test="editable-title"]')
         .first(),
-    ).toHaveValue(firstDashboard.name);
+    ).toContainText(firstDashboard.name);
   },
 );
