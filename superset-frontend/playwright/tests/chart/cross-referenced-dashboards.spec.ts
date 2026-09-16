@@ -203,8 +203,8 @@ testWithAssets(
     await expect(
       page
         .locator('[data-test="dashboard-header-container"]')
-        .locator('[data-test="editable-title"]')
+        .locator('[data-test="editable-title-input"]')
         .first(),
-    ).toContainText(firstDashboard.name);
+    ).toHaveValue(firstDashboard.name);
   },
 );
