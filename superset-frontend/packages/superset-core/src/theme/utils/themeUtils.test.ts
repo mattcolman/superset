@@ -25,6 +25,7 @@ import {
   getColorVariants,
   isThemeDark,
   isThemeConfigDark,
+  getAntdTokenNames,
   useThemeMode,
 } from './themeUtils';
 import { Theme } from '../Theme';
@@ -250,6 +251,14 @@ test('useThemeMode returns false for a light theme', () => {
       ),
   });
   expect(result.current).toBe(false);
+});
+
+test('getAntdTokenNames returns the keys of the antd default design tokens', () => {
+  const names = getAntdTokenNames();
+  expect(names).toEqual(Object.keys(antdTheme.getDesignToken()));
+  expect(names).toContain('colorPrimary');
+  expect(names).toContain('fontSize');
+  expect(names).not.toContain('brandLogoUrl');
 });
 
 test('useThemeMode returns true for a dark theme', () => {
