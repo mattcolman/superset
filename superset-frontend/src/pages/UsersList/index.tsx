@@ -18,6 +18,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { CellProps } from 'react-table';
 import { t } from '@apache-superset/core/translation';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
@@ -195,7 +196,7 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { first_name },
           },
-        }: any) => <span>{first_name}</span>,
+        }: CellProps<UserObject>) => <span>{first_name}</span>,
       },
       {
         accessor: 'last_name',
@@ -206,7 +207,7 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { last_name },
           },
-        }: any) => <span>{last_name}</span>,
+        }: CellProps<UserObject>) => <span>{last_name}</span>,
       },
       {
         accessor: 'username',
@@ -217,7 +218,7 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { username },
           },
-        }: any) => <span>{username}</span>,
+        }: CellProps<UserObject>) => <span>{username}</span>,
       },
       {
         accessor: 'email',
@@ -228,7 +229,7 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { email },
           },
-        }: any) => <span>{email}</span>,
+        }: CellProps<UserObject>) => <span>{email}</span>,
       },
       {
         accessor: 'active',
@@ -239,7 +240,7 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { active },
           },
-        }: any) => <span>{active ? 'Yes' : 'No'}</span>,
+        }: CellProps<UserObject>) => <span>{active ? 'Yes' : 'No'}</span>,
       },
       {
         accessor: 'roles',
@@ -250,7 +251,7 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { roles },
           },
-        }: any) => (
+        }: CellProps<UserObject>) => (
           <Tooltip
             title={
               roles?.map((role: Role) => role.name).join(', ') || t('No roles')
@@ -270,7 +271,7 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { groups },
           },
-        }: any) => (
+        }: CellProps<UserObject>) => (
           <Tooltip
             title={
               groups?.map((group: Group) => group.name).join(', ') ||
@@ -287,14 +288,16 @@ function UsersList({ user }: UsersListProps) {
         id: 'login_count',
         Header: t('Login count'),
         hidden: true,
-        Cell: ({ row: { original } }: any) => original.login_count ?? 0,
+        Cell: ({ row: { original } }: CellProps<UserObject>) =>
+          original.login_count ?? 0,
       },
       {
         accessor: 'fail_login_count',
         id: 'fail_login_count',
         Header: t('Fail login count'),
         hidden: true,
-        Cell: ({ row: { original } }: any) => original.fail_login_count ?? 0,
+        Cell: ({ row: { original } }: CellProps<UserObject>) =>
+          original.fail_login_count ?? 0,
       },
       {
         accessor: 'created_on',
@@ -305,7 +308,7 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { created_on },
           },
-        }: any) => created_on,
+        }: CellProps<UserObject>) => created_on,
       },
       {
         accessor: 'changed_on',
@@ -316,7 +319,7 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { changed_on },
           },
-        }: any) => changed_on,
+        }: CellProps<UserObject>) => changed_on,
       },
       {
         accessor: 'last_login',
@@ -327,10 +330,10 @@ function UsersList({ user }: UsersListProps) {
           row: {
             original: { last_login },
           },
-        }: any) => last_login,
+        }: CellProps<UserObject>) => last_login,
       },
       {
-        Cell: ({ row: { original } }: any) => {
+        Cell: ({ row: { original } }: CellProps<UserObject>) => {
           const handleEdit = () => {
             setCurrentUser(original);
             openModal(ModalType.EDIT);
