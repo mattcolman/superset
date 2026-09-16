@@ -16,6 +16,4 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-export { Splitter } from 'antd';
-export type { SplitterProps } from 'antd/es/splitter';
+export { Splitter, type SplitterProps } from 'antd';

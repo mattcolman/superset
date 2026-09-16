@@ -159,6 +159,7 @@ export { default as ProgressBar, type ProgressBarProps } from './ProgressBar';
 export { Pagination, type PaginationProps } from './Pagination';
 
 export { Skeleton, type SkeletonProps } from './Skeleton';
+export { Splitter, type SplitterProps } from './Splitter';
 export {
   default as Slider,
   type SliderSingleProps,
